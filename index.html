@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e1110">
+<title>Tactical // Christmas 2026</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tactical">
+
+<style>
+:root{--bg:#0e1110;--card:#171c19;--card2:#202720;--text:#edf2ec;--muted:#a9b4aa;--accent:#b8d49b;--warn:#e0bd68;--bad:#d88176;--line:#303931}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:820px;margin:auto;padding:18px 14px 96px}
+.hero{padding:14px 4px 10px}.eyebrow{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:800}
+h1{font-size:30px;margin:5px 0 3px}h2{font-size:19px;margin:0 0 12px}h3{font-size:15px;margin:18px 0 8px}.muted{color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--card2);padding:12px;border-radius:12px}.stat b{display:block;font-size:20px;margin-top:4px}
+label{display:block;font-size:13px;color:var(--muted);margin:9px 0 4px}
+input,select,button,textarea{width:100%;font:inherit;border-radius:10px;border:1px solid #3a443b;background:#111512;color:var(--text);padding:11px}
+button{background:var(--accent);color:#111;font-weight:800;border:0;margin-top:10px}
+.secondary{background:#293229;color:var(--text)} .danger{background:#3a201e;color:#f4d8d4}
+.check{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #2a312b}.check input{width:20px;height:20px;margin:0}.check span{flex:1}
+.badge{display:inline-block;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900}.green{background:var(--accent);color:#172015}.amber{background:var(--warn);color:#241d0d}.red{background:var(--bad);color:#2a1110}
+.progress{height:10px;background:#2b322c;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;background:var(--accent)}
+nav{position:fixed;bottom:0;left:0;right:0;background:#111512f2;border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+nav div{max-width:820px;width:100%;display:grid;grid-template-columns:repeat(5,1fr)}nav button{background:none;color:var(--muted);font-size:11px;padding:14px 2px;margin:0;border-radius:0}
+nav button.active{color:var(--accent)}
+section{display:none}section.active{display:block}.tiny{font-size:12px}.day{margin:8px 0;padding:10px;background:#202720;border-radius:10px}
+canvas{width:100%;height:220px;background:#111512;border-radius:12px}
+.historyItem{padding:10px 0;border-bottom:1px solid #2a312b}
+@media (max-width:600px){.grid3{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+<div class="hero">
+  <div class="eyebrow">TACTICAL // 2026</div>
+  <h1>Mission: Christmas</h1>
+  <div class="muted" id="phaseLine"></div>
+</div>
+
+<section id="today" class="active">
+  <div class="card">
+    <div id="readyBadge" class="badge green">GREEN</div>
+    <h2 style="margin-top:10px" id="todayTitle"></h2>
+    <div class="muted" id="todayNote"></div>
+    <div id="exerciseList"></div>
+  </div>
+
+  <div class="card">
+    <h2>Readiness</h2>
+    <div class="grid">
+      <div><label>Uni (h)</label><input id="sleep" type="number" step=".1" value="7"></div>
+      <div><label>Stressi 1–10</label><input id="stress" type="number" min="1" max="10" value="5"></div>
+      <div><label>Energia 1–10</label><input id="energy" type="number" min="1" max="10" value="7"></div>
+      <div><label>Paino kg</label><input id="weight" type="number" step=".1" placeholder="120"></div>
+    </div>
+    <label>Treeni-RPE 1–10</label><input id="rpe" type="number" min="1" max="10" placeholder="esim. 7">
+    <label>Muistiinpano</label><textarea id="notes" rows="3" placeholder="Miltä kulki, kipuja, huomioita..."></textarea>
+    <button onclick="saveDay()">✓ Tallenna päivä</button>
+    <button class="secondary" onclick="badDay()">Bad day – kevennä</button>
+  </div>
+
+  <div class="card">
+    <h2>Salipainot tänään</h2>
+    <div class="grid">
+      <div><label>Penkki työpaino</label><input id="benchLoad" type="number" step="2.5"></div>
+      <div><label>Trap bar työpaino</label><input id="trapLoad" type="number" step="2.5"></div>
+      <div><label>Kyykky työpaino</label><input id="squatLoad" type="number" step="2.5"></div>
+      <div><label>Pystypunnerrus työpaino</label><input id="ohpLoad" type="number" step="2.5"></div>
+    </div>
+    <p class="tiny muted">Kun kuittaat kaikki pääliikkeen sarjat ja RPE jää ≤8, sovellus ehdottaa seuraavalle vastaavalle treenille +2,5 kg ylävartaloon ja +5 kg alavartaloon.</p>
+  </div>
+</section>
+
+<section id="dashboard">
+  <div class="card">
+    <h2>Asenna sovellus</h2>
+    <p class="tiny muted">Android/Chrome: käytä alla olevaa asennuspainiketta, jos se näkyy. iPhone/Safari: Jaa → Lisää Koti-valikkoon.</p>
+    <button id="installBtn" class="secondary" style="display:none">Asenna sovellus</button>
+  </div>
+
+  <div class="card">
+    <h2>Mission dashboard</h2>
+    <div class="grid3">
+      <div class="stat">Viikko<b id="dashWeek">1/18</b></div>
+      <div class="stat">Viikkopisteet<b id="weekScore">0</b></div>
+      <div class="stat">Compliance<b id="compliance">0%</b></div>
+    </div>
+    <h3>Kokonaiseteneminen</h3>
+    <div class="progress"><i id="overallBar"></i></div>
+    <p class="muted tiny" id="overallText"></p>
+  </div>
+  <div class="card">
+    <h2>Tavoitteet jouluun</h2>
+    <div class="grid">
+      <div class="stat">Paino<b id="dashWeight">–</b><span class="tiny muted">tavoite 110–114 kg</span></div>
+      <div class="stat">Cooper<b id="dashCooper">2400 m</b><span class="tiny muted">tavoite 2700–2800 m</span></div>
+      <div class="stat">Penkki<b id="dashBench">~85 kg</b><span class="tiny muted">tavoite ~100 kg</span></div>
+      <div class="stat">Ruck<b id="dashRuck">5–8 kg</b><span class="tiny muted">tavoite 10–15 kg</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="week">
+  <div class="card"><h2>Tämän viikon runko</h2><div id="weekPlan"></div></div>
+  <div class="card"><h2>18 viikon eteneminen</h2><div id="phases"></div></div>
+</section>
+
+<section id="food">
+  <div class="card">
+    <h2>Ruokavalio</h2>
+    <p class="muted">Lähtötaso: noin 2 700–2 900 kcal/pv. Säädä vain 2–3 viikon painotrendin perusteella. Tavoite 0,3–0,6 kg/vko.</p>
+    <div class="grid">
+      <div class="stat">Proteiini<b>170–190 g</b></div>
+      <div class="stat">Kuitu<b>30–40 g</b></div>
+      <div class="stat">Vesi<b>2.5–3.5 L</b></div>
+      <div class="stat">Herkut<b>1–2 / vko</b></div>
+    </div>
+    <h3>Päivän kuittaukset</h3>
+    <label class="check"><input type="checkbox" class="food"><span>4 proteiinipitoista ateriaa</span></label>
+    <label class="check"><input type="checkbox" class="food"><span>Kasviksia / marjoja / hedelmiä vähintään 5 annosta</span></label>
+    <label class="check"><input type="checkbox" class="food"><span>Ei suunnittelemattomia herkkuja</span></label>
+    <label class="check"><input type="checkbox" class="food"><span>Vettä vähintään 2.5 l</span></label>
+    <button onclick="saveFood()">✓ Tallenna ruokapäivä</button>
+  </div>
+
+  <div class="card">
+    <h2>Helppo arkirunko</h2>
+    <div class="day"><b>Aamiainen</b><br>60–80 g kaurahiutaleita + 250 g rahkaa/skyr + marjoja.</div>
+    <div class="day"><b>Lounas</b><br>150–200 g kanaa, kalaa tai vähärasvaista lihaa + peruna/riisi/täysjyvä + paljon kasviksia.</div>
+    <div class="day"><b>Välipala</b><br>Rahka/skyr/raejuusto + hedelmä. Tarvittaessa täysjyväleipä.</div>
+    <div class="day"><b>Päivällinen</b><br>Sama lautasmalli kuin lounaalla. Kovalla treenipäivällä enemmän hiilihydraattia.</div>
+    <div class="day"><b>Iltapala</b><br>Proteiinipitoinen: rahka, raejuusto, kananmunat tai täysjyväleipä + leikkele.</div>
+    <p class="tiny muted">Jos paino ei laske lainkaan 3 viikkoon ja toteuma on hyvä, vähennä noin 150–200 kcal/pv. Jos paino putoaa yli ~0,8 kg/vko ja treeni hyytyy, lisää energiaa.</p>
+  </div>
+</section>
+
+<section id="progressSec">
+  <div class="card">
+    <h2>Kirjaa testit</h2>
+    <div class="grid">
+      <div><label>Cooper (m)</label><input id="cooperInput" type="number" placeholder="2400"></div>
+      <div><label>Penkki 1RM / arvio (kg)</label><input id="benchMaxInput" type="number" step="2.5" placeholder="85"></div>
+      <div><label>Vyötärö (cm)</label><input id="waistInput" type="number" step=".5"></div>
+      <div><label>Ruck max käytetty (kg)</label><input id="ruckInput" type="number" step="1"></div>
+    </div>
+    <button onclick="saveTest()">✓ Tallenna testitulos</button>
+  </div>
+
+  <div class="card">
+    <h2>Painokehitys</h2>
+    <canvas id="weightChart" width="700" height="220"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Cooper-kehitys</h2>
+    <canvas id="cooperChart" width="700" height="220"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Historia</h2>
+    <div id="history"></div>
+  </div>
+
+  <div class="card">
+    <h2>Varmuuskopio</h2>
+    <p class="tiny muted">Tiedot ovat tämän selaimen localStoragessa. Vie varmuuskopio talteen, jos vaihdat selainta, tyhjennät selaustiedot tai vaihdat puhelinta.</p>
+    <button class="secondary" onclick="exportData()">Vie JSON-varmuuskopio</button>
+    <label>Tuo varmuuskopio</label><input id="importFile" type="file" accept="application/json" onchange="importData(event)">
+    <button class="danger" onclick="clearAll()">Tyhjennä kaikki tiedot</button>
+  </div>
+</section>
+</main>
+
+<nav><div>
+  <button class="active" onclick="tab('today',this)">TÄNÄÄN</button>
+  <button onclick="tab('dashboard',this)">MISSION</button>
+  <button onclick="tab('week',this)">OHJELMA</button>
+  <button onclick="tab('food',this)">RUOKA</button>
+  <button onclick="tab('progressSec',this)">KEHITYS</button>
+</div></nav>
+
+<script>
+const START=new Date('2026-08-17T12:00:00'), END=new Date('2026-12-20T12:00:00');
+const DKEY='tacticalChristmas2026';
+const plans=[
+ ['Voima A',['Lämmittely 8–10 min','Trap bar -maastaveto 4×5','Penkki 4×5','Soutu 4×8','Bulgarialainen askelkyykky 3×8/jalka','Farmer carry 5×30–40 m','Core 3 sarjaa']],
+ ['Zone 2',['45–60 min pyörä / reipas kävely','Pidä teho keskusteluvauhtina','5–10 min liikkuvuus']],
+ ['Palautuminen',['30–45 min kävelyä halutessa','Kevyt liikkuvuus','Priorisoi uni']],
+ ['Voima B',['Lämmittely 8–10 min','Kyykky 4×5','Pystypunnerrus 4×6','Ylätalja / avustettu leuanveto 4×8','Step-up 3×10/jalka','Kävelymatto nousulla 6×2 min','Core 3 sarjaa']],
+ ['Lepo',['Normaali arki + kevyt kävely','Ei korvaavaa kovaa treeniä']],
+ ['Tactical endurance',['60–120 min: MTB / suunnistus / mäkikävely / ruck','Ruck aluksi 5–8 kg','Kasvata kestoa ennen repun painoa']],
+ ['Easy aerobic',['30–60 min erittäin kevyt Zone 2','Vaihtoehto: täydellinen lepo jos väsynyt']]
+];
+function db(){return JSON.parse(localStorage.getItem(DKEY)||'{"days":{},"tests":[],"loads":{"bench":60,"trap":90,"squat":60,"ohp":35}}')}
+function saveDB(x){localStorage.setItem(DKEY,JSON.stringify(x))}
+function iso(d=new Date()){return d.toISOString().slice(0,10)}
+function weekNo(d=new Date()){let n=Math.floor((d-START)/(7*864e5))+1;return Math.max(1,Math.min(18,n))}
+function phase(w){if(w<=4)return 'BASE';if(w<=9)return 'BUILD';if(w<=14)return 'TACTICAL';return 'PERFORMANCE'}
+function progression(w){
+ if(w<=4)return 'Tekniikka ja pohja. RPE 6–7. Juoksu: 6×(3 min kevyt + 2 min kävely).';
+ if(w<=9)return 'Lisää pääliikkeisiin maltillisesti. Juoksu etenee 5×5 min → 30 min yhtenäiseksi.';
+ if(w<=14)return 'Yksi laatuharjoitus: vuoroviikoin 6×400 m tai mäet. Ruck 7–10 kg, 60–90 min.';
+ return 'Cooper-spesifi: 400–800 m vedot, muu aerobinen helppoa. Viikko 17 kevennys, viikko 18 testit.';
+}
+function currentPlanIndex(){return (new Date().getDay()+6)%7}
+function render(){
+ const data=db(), w=weekNo(), p=plans[currentPlanIndex()];
+ phaseLine.textContent=`${phase(w)} · viikko ${w}/18 · 17.8.–20.12.2026`;
+ todayTitle.textContent=p[0]; todayNote.textContent=progression(w);
+ exerciseList.innerHTML=p[1].map((x,i)=>`<label class="check"><input type="checkbox" data-ex="${i}"><span>${x}</span></label>`).join('');
+ weekPlan.innerHTML=plans.map((p,i)=>`<div class="day"><b>${['Ma','Ti','Ke','To','Pe','La','Su'][i]} — ${p[0]}</b><br><span class="tiny muted">${p[1].slice(0,3).join(' · ')}</span></div>`).join('');
+ phases.innerHTML='<p><b>1–4 BASE:</b> kudokset, tekniikka, aerobinen pohja.</p><p><b>5–9 BUILD:</b> voima ja yhtenäinen juoksu.</p><p><b>10–14 TACTICAL:</b> intervallit, mäet, kantaminen.</p><p><b>15–18 PERFORMANCE:</b> Cooper-spesifi työ + testit.</p>';
+ const pct=Math.min(100,Math.round(w/18*100)); overallBar.style.width=pct+'%'; overallText.textContent=`Viikko ${w}/18 · ${pct}% ohjelmasta`; dashWeek.textContent=`${w}/18`;
+ benchLoad.value=data.loads.bench; trapLoad.value=data.loads.trap; squatLoad.value=data.loads.squat; ohpLoad.value=data.loads.ohp;
+ restoreToday(); updateDashboard(); renderHistory(); drawCharts();
+}
+function readiness(){
+ let s=+sleep.value, st=+stress.value,e=+energy.value,b=readyBadge;
+ let r=(s<5.5||e<=3)?'RED':(s<7||st>=8||e<=5)?'AMBER':'GREEN';
+ b.textContent=r;b.className='badge '+r.toLowerCase();return r
+}
+['sleep','stress','energy'].forEach(id=>document.getElementById(id).addEventListener('input',readiness));
+function restoreToday(){
+ const data=db(), x=data.days[iso()];
+ if(x){
+   sleep.value=x.sleep??7; stress.value=x.stress??5; energy.value=x.energy??7; weight.value=x.weight??''; rpe.value=x.rpe??''; notes.value=x.notes??'';
+   (x.checks||[]).forEach((v,i)=>{let e=document.querySelector(`[data-ex="${i}"]`);if(e)e.checked=v});
+   const fs=x.food||[]; fs.forEach((v,i)=>{let e=document.querySelectorAll('.food')[i];if(e)e.checked=v});
+ }
+ readiness();
+}
+function saveDay(){
+ let data=db(); const checks=[...document.querySelectorAll('[data-ex]')].map(x=>x.checked);
+ data.days[iso()]={...(data.days[iso()]||{}),sleep:+sleep.value,stress:+stress.value,energy:+energy.value,weight:weight.value?+weight.value:null,rpe:rpe.value?+rpe.value:null,notes:notes.value,checks,readiness:readiness(),plan:todayTitle.textContent};
+ data.loads={bench:+benchLoad.value||data.loads.bench,trap:+trapLoad.value||data.loads.trap,squat:+squatLoad.value||data.loads.squat,ohp:+ohpLoad.value||data.loads.ohp};
+ const allDone=checks.length && checks.every(Boolean), rv=+rpe.value||99;
+ if(allDone && rv<=8){
+   if(todayTitle.textContent==='Voima A'){data.loads.bench+=2.5;data.loads.trap+=5}
+   if(todayTitle.textContent==='Voima B'){data.loads.squat+=5;data.loads.ohp+=2.5}
+ }
+ saveDB(data); alert('Päivä tallennettu. Progressio päivitetty, jos ehdot täyttyivät.'); render();
+}
+function saveFood(){
+ let data=db(); data.days[iso()]={...(data.days[iso()]||{}),food:[...document.querySelectorAll('.food')].map(x=>x.checked)}; saveDB(data); updateDashboard(); alert('Ruokapäivä tallennettu.');
+}
+function badDay(){
+ sleep.value=Math.min(+sleep.value||5,5.4); energy.value=3; readiness();
+ todayTitle.textContent='Recovery mission'; todayNote.textContent='30–45 min erittäin kevyt kävely tai pyörä + 10 min liikkuvuutta. Ei kovaa harjoittelua tänään.';
+ exerciseList.innerHTML='<label class="check"><input type="checkbox" data-ex="0"><span>30–45 min kevyt aerobinen</span></label><label class="check"><input type="checkbox" data-ex="1"><span>10 min liikkuvuus</span></label>';
+}
+function weekRange(){
+ let now=new Date(), day=(now.getDay()+6)%7, mon=new Date(now); mon.setDate(now.getDate()-day); mon.setHours(12,0,0,0);
+ let sun=new Date(mon); sun.setDate(mon.getDate()+6); return [mon,sun];
+}
+function updateDashboard(){
+ const data=db(), [a,b]=weekRange(); let score=0,max=0,doneDays=0,latestW=null;
+ Object.entries(data.days).forEach(([k,v])=>{
+   let d=new Date(k+'T12:00:00'); if(v.weight) latestW=v.weight;
+   if(d>=a&&d<=b){
+     max+=10;
+     let c=(v.checks||[]); if(c.length&&c.every(Boolean)) score+=5;
+     let f=(v.food||[]); if(f.length){score+=f.filter(Boolean).length; max+=4}
+     if(v.sleep>=7)score+=1;
+     if(c.some(Boolean)||f.some(Boolean))doneDays++;
+   }
+ });
+ weekScore.textContent=score; compliance.textContent=(max?Math.round(score/max*100):0)+'%'; dashWeight.textContent=latestW?latestW.toFixed(1)+' kg':'–';
+ const tests=data.tests||[]; if(tests.length){
+   const t=tests[tests.length-1]; if(t.cooper)dashCooper.textContent=t.cooper+' m'; if(t.bench)dashBench.textContent=t.bench+' kg'; if(t.ruck)dashRuck.textContent=t.ruck+' kg';
+ }
+}
+function saveTest(){
+ let data=db(); data.tests.push({date:iso(),cooper:+cooperInput.value||null,bench:+benchMaxInput.value||null,waist:+waistInput.value||null,ruck:+ruckInput.value||null}); saveDB(data); cooperInput.value=benchMaxInput.value=waistInput.value=ruckInput.value=''; render();
+}
+function renderHistory(){
+ const data=db(), items=Object.entries(data.days).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,30);
+ history.innerHTML=items.length?items.map(([k,v])=>`<div class="historyItem"><b>${k}</b> · ${v.plan||''}<br><span class="tiny muted">${v.weight?`Paino ${v.weight} kg · `:''}${v.sleep?`Uni ${v.sleep} h · `:''}${v.rpe?`RPE ${v.rpe}`:''}</span></div>`).join(''):'<span class="muted">Ei kirjauksia vielä.</span>';
+}
+function drawLine(canvas, points, labelSuffix=''){
+ const ctx=canvas.getContext('2d'), w=canvas.width,h=canvas.height; ctx.clearRect(0,0,w,h);
+ ctx.strokeStyle='#303931';ctx.lineWidth=1;for(let i=1;i<5;i++){let y=i*h/5;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+ if(points.length<1)return;
+ let vals=points.map(p=>p.v), min=Math.min(...vals),max=Math.max(...vals); if(max===min){max+=1;min-=1}
+ ctx.strokeStyle='#b8d49b';ctx.lineWidth=3;ctx.beginPath();
+ points.forEach((p,i)=>{let x=20+(w-40)*(i/(Math.max(1,points.length-1))),y=h-20-(h-40)*((p.v-min)/(max-min)); if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});
+ ctx.stroke(); ctx.fillStyle='#edf2ec';ctx.font='14px -apple-system';ctx.fillText(max.toFixed(0)+labelSuffix,8,16);ctx.fillText(min.toFixed(0)+labelSuffix,8,h-6);
+}
+function drawCharts(){
+ const data=db(); let wp=[];Object.entries(data.days).sort().forEach(([k,v])=>{if(v.weight)wp.push({d:k,v:+v.weight})});
+ let cp=(data.tests||[]).filter(x=>x.cooper).map(x=>({d:x.date,v:+x.cooper}));
+ drawLine(weightChart,wp,' kg');drawLine(cooperChart,cp,' m');
+}
+function exportData(){
+ const blob=new Blob([JSON.stringify(db(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='tactical-christmas-2026-backup.json';a.click();URL.revokeObjectURL(url);
+}
+function importData(e){
+ const f=e.target.files[0]; if(!f)return; const r=new FileReader();r.onload=()=>{try{localStorage.setItem(DKEY,r.result);alert('Varmuuskopio tuotu.');render()}catch{alert('Tiedosto ei ollut kelvollinen varmuuskopio.')}};r.readAsText(f)
+}
+function clearAll(){if(confirm('Poistetaanko kaikki tämän sovelluksen tallennetut tiedot tältä selaimelta?')){localStorage.removeItem(DKEY);render()}}
+function tab(id,b){document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');if(id==='progressSec')drawCharts()}
+render();
+</script>
+
+<script>
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const b = document.getElementById('installBtn');
+  if (b) b.style.display = 'block';
+});
+document.addEventListener('click', async (e) => {
+  if (e.target && e.target.id === 'installBtn' && deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    e.target.style.display = 'none';
+  }
+});
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js'));
+}
+</script>
+
+</body>
+</html>
